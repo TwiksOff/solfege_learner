@@ -1,1240 +1,234 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Portée Vivante — entraînement à la lecture de notes</title>
-<style>
-  :root{
-    --bg:#efe7d8;
-    --bg-panel:#faf6ec;
-    --bg-panel-2:#f2ead9;
-    --ink:#2b2420;
-    --ink-soft:#5c5245;
-    --accent:#7a2e3a;
-    --accent-ink:#ffffff;
-    --success:#2f5d50;
-    --danger:#b3402a;
-    --gold:#a8823a;
-    --line:#c9bfa6;
-    --line-strong:#a89b7c;
-    --key-white:#fbf8f0;
-    --key-white-border:#c7bca4;
-    --key-black:#2b2420;
-    --shadow:0 6px 18px rgba(43,36,32,0.14);
-    --radius:10px;
-    --font-display: 'Iowan Old Style','Palatino Linotype', Palatino, Georgia, serif;
-    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Courier New', monospace;
-  }
-  [data-theme="dark"]{
-    --bg:#181410;
-    --bg-panel:#221c16;
-    --bg-panel-2:#2a231b;
-    --ink:#ece3d4;
-    --ink-soft:#b6a998;
-    --accent:#d98a72;
-    --accent-ink:#241a15;
-    --success:#7fb89c;
-    --danger:#e2725b;
-    --gold:#cf9f52;
-    --line:#4a4030;
-    --line-strong:#6b5d40;
-    --key-white:#e9e0cf;
-    --key-white-border:#4a4030;
-    --key-black:#100d0a;
-    --shadow:0 6px 22px rgba(0,0,0,0.45);
-  }
-
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{margin:0;padding:0; overscroll-behavior:none;}
-  html{height:100%;}
-  body{
-    background:var(--bg);
-    color:var(--ink);
-    font-family:var(--font-body);
-    min-height:100vh;
-    min-height:100dvh;
-    transition:background .25s ease, color .25s ease;
-    touch-action:manipulation;
-  }
-  body.fullscreen-mode{overflow:hidden;}
-  button, select, input{touch-action:manipulation;}
-  body::before{
-    content:"";
-    position:fixed; inset:0;
-    background:
-      radial-gradient(ellipse at top left, rgba(168,130,58,0.07), transparent 55%),
-      radial-gradient(ellipse at bottom right, rgba(122,46,58,0.06), transparent 55%);
-    pointer-events:none;
-  }
-
-  #app{
-    max-width:1180px;margin:0 auto;
-    padding:max(22px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 60px max(20px, env(safe-area-inset-left));
-    position:relative;
-  }
-
-  header.top{
-    display:flex; align-items:flex-end; justify-content:space-between; gap:16px;
-    padding-bottom:16px; margin-bottom:20px;
-    border-bottom:2px solid var(--line);
-  }
-  header.top h1{
-    font-family:var(--font-display); font-size:2.1rem; font-weight:600; margin:0;
-    letter-spacing:.2px;
-  }
-  header.top h1 span{color:var(--accent);}
-  header.top p.sub{margin:4px 0 0; color:var(--ink-soft); font-size:.92rem; font-style:italic;}
-  .top-actions{display:flex; gap:8px; flex-shrink:0;}
-  .icon-btn{
-    background:var(--bg-panel); border:1px solid var(--line-strong); color:var(--ink);
-    width:44px; height:44px; border-radius:50%; cursor:pointer; font-size:1.1rem;
-    display:flex; align-items:center; justify-content:center; transition:transform .15s ease, background .15s ease;
-    flex-shrink:0;
-  }
-  .icon-btn:hover{transform:translateY(-1px); background:var(--bg-panel-2);}
-  .icon-btn:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible{
-    outline:3px solid var(--gold); outline-offset:2px;
-  }
-
-  .layout{display:grid; grid-template-columns:280px 1fr; gap:20px; align-items:start;}
-  @media (max-width:900px){ .layout{grid-template-columns:1fr;} }
-
-  aside#settingsPanel{
-    background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
-    padding:16px; box-shadow:var(--shadow); position:sticky; top:16px;
-  }
-  aside#settingsPanel.collapsed{display:none;}
-  @media (max-width:900px){ aside#settingsPanel.collapsed{display:none;} aside#settingsPanel{position:static;} }
-
-  fieldset{border:none; border-top:1px solid var(--line); padding:12px 0; margin:0;}
-  fieldset:first-child{border-top:none; padding-top:0;}
-  legend{
-    font-family:var(--font-display); font-weight:600; font-size:.85rem; letter-spacing:.5px;
-    text-transform:uppercase; color:var(--accent); padding:0; margin-bottom:8px;
-  }
-  .field{margin-bottom:10px;}
-  .field label{display:block; font-size:.82rem; color:var(--ink-soft); margin-bottom:3px;}
-  .field select, .field input[type="number"]{
-    width:100%; padding:7px 8px; border-radius:6px; border:1px solid var(--line-strong);
-    background:var(--bg-panel-2); color:var(--ink); font-family:var(--font-body); font-size:.86rem;
-  }
-  .row2{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
-  .checkline{display:flex; align-items:center; gap:8px; font-size:.85rem; margin-bottom:8px; color:var(--ink);}
-  .checkline input{accent-color:var(--accent); width:16px; height:16px;}
-  .preset-btns{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;}
-  .chip{
-    border:1px solid var(--line-strong); background:var(--bg-panel-2); color:var(--ink);
-    padding:5px 10px; border-radius:999px; font-size:.78rem; cursor:pointer; transition:.15s;
-  }
-  .chip.active{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
-  .chip:hover{transform:translateY(-1px);}
-  .small-note{font-size:.74rem; color:var(--ink-soft); line-height:1.3;}
-  .device-status{font-size:.78rem; padding:6px 8px; border-radius:6px; background:var(--bg-panel-2); margin-top:6px; color:var(--ink-soft);}
-  .device-status.ok{color:var(--success);}
-  .device-status.err{color:var(--danger);}
-
-  main{min-width:0;}
-
-  .mode-bar{
-    display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
-    background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
-    padding:10px 14px; margin-bottom:16px; box-shadow:var(--shadow);
-  }
-  .mode-tabs{display:flex; gap:6px;}
-  .mode-tab{
-    border:1px solid var(--line-strong); background:var(--bg-panel-2); color:var(--ink);
-    padding:7px 14px; border-radius:8px; cursor:pointer; font-size:.85rem; font-family:var(--font-body);
-  }
-  .mode-tab.active{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
-  .session-stats{display:flex; gap:16px; font-family:var(--font-mono); font-size:.85rem; color:var(--ink-soft);}
-  .session-stats b{color:var(--ink); font-size:1rem;}
-  .go-btn{
-    background:var(--success); color:#fff; border:none; padding:9px 18px; border-radius:8px;
-    font-size:.9rem; cursor:pointer; font-weight:600; box-shadow:var(--shadow);
-  }
-  .go-btn.stop{background:var(--danger);}
-  .go-btn:disabled{opacity:.5; cursor:not-allowed;}
-
-  .staff-card{
-    background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
-    padding:18px; box-shadow:var(--shadow); position:relative; margin-bottom:16px;
-  }
-  .staff-card-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
-  .staff-card-title{font-family:var(--font-display); font-size:.85rem; color:var(--ink-soft); font-style:italic;}
-  #staffSvg{width:100%; height:auto; display:block; max-width:640px; margin:0 auto;}
-
-  /* ---------- Mode plein écran (optimisé iPhone / mobile) ---------- */
-  body.fullscreen-mode header.top,
-  body.fullscreen-mode aside#settingsPanel,
-  body.fullscreen-mode .stats-card,
-  body.fullscreen-mode footer.hint{ display:none !important; }
-  body.fullscreen-mode .layout{ display:block; }
-  body.fullscreen-mode #app{ padding:0; max-width:none; }
-  body.fullscreen-mode #practiceArea{
-    position:fixed; inset:0; z-index:2000;
-    background:var(--bg);
-    display:flex; flex-direction:column;
-    padding:max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
-  }
-  body.fullscreen-mode .mode-bar{ order:1; margin-bottom:8px; flex-shrink:0; }
-  body.fullscreen-mode .staff-card{
-    order:2; flex:1 1 auto; display:flex; flex-direction:column; justify-content:center;
-    margin-bottom:10px; min-height:0;
-  }
-  body.fullscreen-mode #staffSvg{ max-width:min(94vw, 780px); width:100%; }
-  body.fullscreen-mode .feedback-overlay{ font-size:clamp(3rem, 16vw, 6rem); }
-  body.fullscreen-mode .keyboard-card{ order:3; flex-shrink:0; margin-bottom:0; }
-  body.fullscreen-mode .answer-line .name-hint{ font-size:1.15rem; }
-  #fullscreenBtn.is-active{ background:var(--accent); color:var(--accent-ink); }
-
-  /* ---------- Ajustements fins pour petits écrans (iPhone 13 ≈ 390px) ---------- */
-  @media (max-width:480px){
-    #app{ padding-left:14px; padding-right:14px; }
-    header.top{ flex-wrap:wrap; }
-    header.top h1{ font-size:1.5rem; }
-    header.top p.sub{ font-size:.82rem; }
-    .staff-card, .keyboard-card, .stats-card, aside#settingsPanel{ padding:12px; }
-    .feedback-overlay{ font-size:3.4rem; }
-    .mode-bar{ padding:8px 10px; gap:8px; }
-    .mode-tab{ padding:7px 10px; font-size:.8rem; }
-    .session-stats{ gap:10px; font-size:.78rem; order:3; width:100%; justify-content:space-around; }
-    .go-btn{ padding:9px 14px; font-size:.85rem; }
-    .answer-line{ flex-wrap:wrap; gap:8px; }
-    body.fullscreen-mode #staffSvg{ max-width:96vw; }
-  }
-  .staff-lines{stroke:var(--ink); stroke-width:1.6;}
-  .ledger{stroke:var(--ink); stroke-width:1.6;}
-  .notehead{fill:var(--accent);}
-  .stem{stroke:var(--accent); stroke-width:1.6;}
-  .accidental{fill:var(--gold); font-family:var(--font-display);}
-  .clef{fill:var(--ink); font-family:serif;}
-
-  .feedback-overlay{
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    pointer-events:none; font-family:var(--font-display); font-size:5rem; font-weight:700;
-    opacity:0; transition:opacity .15s ease, transform .15s ease; transform:scale(.8);
-  }
-  .feedback-overlay.show-correct{opacity:.9; color:var(--success); transform:scale(1);}
-  .feedback-overlay.show-wrong{opacity:.9; color:var(--danger); transform:scale(1);}
-
-  .answer-line{display:flex; align-items:center; justify-content:center; gap:14px; min-height:34px; margin-top:6px;}
-  .answer-line .name-hint{font-family:var(--font-mono); font-size:1rem; color:var(--ink-soft);}
-  .link-btn{
-    background:none; border:none; color:var(--accent); text-decoration:underline; cursor:pointer;
-    font-size:.82rem; font-family:var(--font-body); padding:2px 4px;
-  }
-
-  .keyboard-card{
-    background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
-    padding:14px; box-shadow:var(--shadow); margin-bottom:16px; overflow-x:auto;
-  }
-  .keyboard-title{font-size:.78rem; color:var(--ink-soft); margin:0 0 8px 4px; display:flex; justify-content:space-between;}
-  #keyboardSvg{display:block; height:130px;}
-  .pkey-white{fill:var(--key-white); stroke:var(--key-white-border); stroke-width:1; cursor:pointer;}
-  .pkey-white:hover{fill:var(--gold); opacity:.5;}
-  .pkey-black{fill:var(--key-black); cursor:pointer;}
-  .pkey-black:hover{opacity:.75;}
-  .pkey-target{fill:var(--accent) !important; opacity:.55;}
-
-  .stats-card{
-    background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
-    padding:16px; box-shadow:var(--shadow);
-  }
-  .stats-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; margin-bottom:14px;}
-  .stat-box{background:var(--bg-panel-2); border-radius:8px; padding:10px 12px; text-align:center;}
-  .stat-box .val{font-family:var(--font-mono); font-size:1.4rem; font-weight:700; color:var(--accent);}
-  .stat-box .lab{font-size:.72rem; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.4px;}
-  table.weak-table{width:100%; border-collapse:collapse; font-size:.85rem;}
-  table.weak-table th, table.weak-table td{text-align:left; padding:5px 8px; border-bottom:1px solid var(--line);}
-  table.weak-table th{color:var(--ink-soft); font-weight:600; font-size:.75rem; text-transform:uppercase;}
-  .bar{height:6px; border-radius:3px; background:var(--line); overflow:hidden; margin-top:3px;}
-  .bar > div{height:100%; background:var(--danger);}
-  .reset-stats{margin-top:10px; font-size:.78rem;}
-
-  .tuner-line{display:flex; align-items:center; gap:10px; font-family:var(--font-mono); font-size:.82rem; color:var(--ink-soft); margin-top:6px;}
-  .tuner-meter{flex:1; height:8px; background:var(--line); border-radius:4px; position:relative;}
-  .tuner-meter .needle{position:absolute; top:-3px; width:3px; height:14px; background:var(--accent); border-radius:2px; transform:translateX(-50%); left:50%;}
-
-  footer.hint{text-align:center; color:var(--ink-soft); font-size:.76rem; margin-top:22px;}
-</style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Le Président — Entraînement</title>
+<link rel="stylesheet" href="style.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 </head>
-<body data-theme="light">
-<div id="app">
+<body class="theme-dark">
 
-  <header class="top">
-    <div>
-      <h1>Portée <span>Vivante</span></h1>
-      <p class="sub">Entraînement à la lecture des notes — clavier virtuel, MIDI ou microphone</p>
-    </div>
-    <div class="top-actions">
-      <button class="icon-btn" id="toggleSettingsBtn" title="Réglages">⚙</button>
-      <button class="icon-btn" id="toggleThemeBtn" title="Thème clair/sombre">☾</button>
-    </div>
-  </header>
-
-  <div class="layout">
-
-    <aside id="settingsPanel">
-
-      <fieldset>
-        <legend>Niveau</legend>
-        <div class="preset-btns">
-          <button class="chip active" data-preset="debutant">Débutant</button>
-          <button class="chip" data-preset="intermediaire">Intermédiaire</button>
-          <button class="chip" data-preset="avance">Avancé</button>
-          <button class="chip" data-preset="custom">Personnalisé</button>
-        </div>
-        <div class="small-note" id="presetDesc">Clé de sol, Do4 à Do5, notes naturelles uniquement.</div>
-      </fieldset>
-
-      <fieldset id="customRangeFieldset" style="display:none;">
-        <legend>Tessiture personnalisée</legend>
-        <div class="field">
-          <label for="clefMode">Clé</label>
-          <select id="clefMode">
-            <option value="treble">Sol (aiguë)</option>
-            <option value="bass">Fa (grave)</option>
-            <option value="alterne">Alternée (Sol / Fa)</option>
-          </select>
-        </div>
-        <div class="row2">
-          <div class="field">
-            <label for="rangeMin">Note la plus grave</label>
-            <select id="rangeMin"></select>
-          </div>
-          <div class="field">
-            <label for="rangeMax">Note la plus aiguë</label>
-            <select id="rangeMax"></select>
-          </div>
-        </div>
-        <label class="checkline"><input type="checkbox" id="accidentalsToggle"> Inclure dièses / bémols</label>
-        <div class="field" id="accStyleField" style="display:none;">
-          <label for="accStyle">Écriture des altérations</label>
-          <select id="accStyle">
-            <option value="sharp">Toujours dièse (#)</option>
-            <option value="flat">Toujours bémol (♭)</option>
-            <option value="mixed">Mélangée (aléatoire)</option>
-          </select>
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend>Mode d'écoute</legend>
-        <div class="field">
-          <select id="inputMethod">
-            <option value="virtual">Clavier virtuel (clic souris)</option>
-            <option value="midi">Clavier MIDI (USB/Bluetooth)</option>
-            <option value="mic">Microphone (détection audio)</option>
-          </select>
-        </div>
-        <div id="midiDeviceField" class="field" style="display:none;">
-          <label for="midiDeviceSelect">Périphérique MIDI</label>
-          <select id="midiDeviceSelect"><option>—</option></select>
-          <div class="device-status" id="midiStatus">MIDI non initialisé.</div>
-        </div>
-        <div id="micDeviceField" style="display:none;">
-          <button class="chip" id="enableMicBtn" style="width:100%;">Activer le microphone</button>
-          <div class="device-status" id="micStatus">Micro inactif.</div>
-          <div class="tuner-line" id="tunerLine" style="display:none;">
-            <span id="tunerFreq">—</span>
-            <div class="tuner-meter"><div class="needle" id="tunerNeedle"></div></div>
-          </div>
-        </div>
-        <label class="checkline"><input type="checkbox" id="ignoreOctaveToggle"> Ignorer l'octave (accepter toute octave)</label>
-      </fieldset>
-
-      <fieldset>
-        <legend>Affichage</legend>
-        <label class="checkline"><input type="checkbox" id="solfegeToggle"> Noms en solfège (Do Ré Mi…)</label>
-        <label class="checkline"><input type="checkbox" id="showOctaveToggle" checked> Afficher le numéro d'octave</label>
-        <label class="checkline"><input type="checkbox" id="hintKeyboardToggle"> Surligner la touche attendue</label>
-        <label class="checkline"><input type="checkbox" id="soundToggle" checked> Sons de retour (juste/faux)</label>
-        <div class="field">
-          <label for="autoAdvance">Passage automatique après (0 = désactivé)</label>
-          <select id="autoAdvance">
-            <option value="0">Désactivé — j'avance moi-même</option>
-            <option value="5">5 secondes</option>
-            <option value="8">8 secondes</option>
-            <option value="12">12 secondes</option>
-          </select>
-        </div>
-      </fieldset>
-
-    </aside>
-
-    <main>
-
-      <div id="practiceArea">
-      <div class="mode-bar">
-        <div class="mode-tabs">
-          <button class="mode-tab active" data-mode="libre">Libre</button>
-          <button class="mode-tab" data-mode="chrono">Chrono</button>
-          <button class="mode-tab" data-mode="serie">Série</button>
-        </div>
-        <div id="chronoDurationField" style="display:none;">
-          <select id="chronoDuration">
-            <option value="60">60 s</option>
-            <option value="120">120 s</option>
-          </select>
-        </div>
-        <div class="session-stats">
-          <span>Score <b id="sessSore">0</b></span>
-          <span>Série <b id="sessStreak">0</b></span>
-          <span id="sessTimerWrap" style="display:none;">Temps <b id="sessTimer">60</b></span>
-        </div>
-        <button class="go-btn" id="startStopBtn">Commencer</button>
-      </div>
-
-      <div class="staff-card" id="staffCard">
-        <div class="staff-card-header">
-          <span class="staff-card-title">Note à identifier</span>
-          <button class="icon-btn" id="fullscreenBtn" title="Plein écran">⤢</button>
-        </div>
-        <svg id="staffSvg" viewBox="0 0 600 260" xmlns="http://www.w3.org/2000/svg"></svg>
-        <div class="feedback-overlay" id="feedbackOverlay">✓</div>
-        <div class="answer-line">
-          <span class="name-hint" id="currentAnswerName"></span>
-          <button class="link-btn" id="revealBtn">Révéler la note</button>
-          <button class="link-btn" id="skipBtn">Passer →</button>
-        </div>
-      </div>
-
-      <div class="keyboard-card">
-        <p class="keyboard-title"><span>Clavier virtuel — cliquez la touche que vous entendez / voulez jouer</span><span id="keyboardRangeLabel"></span></p>
-        <svg id="keyboardSvg" xmlns="http://www.w3.org/2000/svg"></svg>
-      </div>
-      </div>
-
-      <div class="stats-card">
-        <div class="stats-grid">
-          <div class="stat-box"><div class="val" id="statTotal">0</div><div class="lab">Notes jouées</div></div>
-          <div class="stat-box"><div class="val" id="statAccuracy">—</div><div class="lab">Précision</div></div>
-          <div class="stat-box"><div class="val" id="statBestStreak">0</div><div class="lab">Meilleure série</div></div>
-          <div class="stat-box"><div class="val" id="statReaction">—</div><div class="lab">Temps de réponse moy.</div></div>
-          <div class="stat-box"><div class="val" id="statBestChrono">—</div><div class="lab">Record chrono</div></div>
-        </div>
-        <table class="weak-table" id="weakTable">
-          <thead><tr><th>Notes à retravailler</th><th>Réussite</th><th></th></tr></thead>
-          <tbody></tbody>
-        </table>
-        <div class="reset-stats"><button class="link-btn" id="resetStatsBtn">Réinitialiser les statistiques</button></div>
-      </div>
-
-    </main>
+<!-- ===================== BARRE SUPÉRIEURE ===================== -->
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-seal" aria-hidden="true">♛</span>
+    <span class="brand-text">Le Président<span class="brand-sub">salle d'entraînement</span></span>
   </div>
+  <nav class="topbar-actions">
+    <button class="btn btn-ghost" id="btn-new-game" title="Nouvelle partie">
+      <span class="icon">🂡</span> Nouvelle partie
+    </button>
+    <button class="btn btn-ghost" id="btn-training" title="Mode entraînement">
+      <span class="icon">🎯</span> Entraînement
+    </button>
+    <button class="btn btn-ghost" id="btn-stats" title="Statistiques">
+      <span class="icon">📈</span> Statistiques
+    </button>
+    <button class="btn btn-ghost" id="btn-settings" title="Paramètres">
+      <span class="icon">⚙️</span> Paramètres
+    </button>
+    <button class="btn btn-ghost btn-danger" id="btn-reset" title="Réinitialiser la partie en cours">
+      <span class="icon">↺</span> Réinitialiser
+    </button>
+  </nav>
+</header>
 
-  <footer class="hint">Toutes les données (réglages, statistiques) restent dans votre navigateur, en local.</footer>
+<!-- ===================== CORPS PRINCIPAL ===================== -->
+<main class="app-body">
+
+  <!-- ------- TABLE DE JEU ------- -->
+  <section class="table-wrap">
+    <div class="table-oval" id="table-oval">
+      <div class="table-felt-seam" aria-hidden="true"></div>
+      <div id="bot-seats" class="bot-seats"><!-- sièges des bots générés en JS --></div>
+
+      <div class="pile-zone" id="pile-zone">
+        <div class="pile-label">Pli en cours</div>
+        <div class="pile-cards" id="pile-cards"><span class="pile-empty">Pli libre — à vous d'ouvrir</span></div>
+        <div class="trick-counter" id="trick-counter">Manche · pli n°1</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------- PANNEAU LATÉRAL ------- -->
+  <aside class="side-panel" id="side-panel">
+    <div class="side-block">
+      <h3>Table</h3>
+      <ul class="player-status-list" id="player-status-list"><!-- généré en JS --></ul>
+    </div>
+    <div class="side-block">
+      <h3>Historique</h3>
+      <ul class="history-list" id="history-list"></ul>
+    </div>
+    <div class="side-block coach-block" id="coach-block">
+      <h3>Message du coach</h3>
+      <p class="coach-message" id="coach-message">Cliquez sur « Conseils » pendant votre tour pour obtenir de l'aide.</p>
+    </div>
+  </aside>
+
+  <!-- ------- ZONE MAIN DU JOUEUR ------- -->
+  <footer class="hand-zone">
+    <div class="hand-toolbar">
+      <div class="hand-toolbar-left">
+        <span id="hand-count" class="hand-count">13 cartes</span>
+        <span id="turn-indicator" class="turn-indicator">En attente…</span>
+      </div>
+      <div class="hand-toolbar-actions">
+        <button class="btn btn-outline" id="btn-clear-selection">Annuler la sélection</button>
+        <button class="btn btn-outline" id="btn-advice">💡 Conseils</button>
+        <button class="btn btn-outline" id="btn-analysis">🔍 Analyse</button>
+        <button class="btn btn-primary" id="btn-pass">Passer</button>
+        <button class="btn btn-gold" id="btn-play">Jouer</button>
+      </div>
+    </div>
+    <div class="hand-cards" id="hand-cards"><!-- cartes du joueur, générées en JS --></div>
+  </footer>
+
+</main>
+
+<!-- ===================== MODALES ===================== -->
+
+<!-- Paramètres -->
+<div class="modal-overlay" id="modal-settings" hidden>
+  <div class="modal parchment" role="dialog" aria-labelledby="settings-title">
+    <button class="modal-close" data-close-modal>✕</button>
+    <h2 id="settings-title">Paramètres</h2>
+
+    <div class="settings-grid">
+      <label class="field">
+        <span>Nombre de joueurs (vous + bots)</span>
+        <select id="set-player-count">
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4" selected>4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Difficulté des bots</span>
+        <select id="set-difficulty">
+          <option value="débutant">Débutant</option>
+          <option value="facile">Facile</option>
+          <option value="moyen" selected>Moyen</option>
+          <option value="difficile">Difficile</option>
+          <option value="expert">Expert</option>
+          <option value="mixte">Mixte (aléatoire)</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Vitesse des bots</span>
+        <select id="set-bot-speed">
+          <option value="lente">Lente</option>
+          <option value="normale" selected>Normale</option>
+          <option value="rapide">Rapide</option>
+        </select>
+      </label>
+
+      <label class="field field-toggle">
+        <span>Animations</span>
+        <input type="checkbox" id="set-animations" checked />
+      </label>
+
+      <label class="field field-toggle">
+        <span>Afficher les conseils automatiquement</span>
+        <input type="checkbox" id="set-autohints" />
+      </label>
+
+      <label class="field field-toggle">
+        <span>Mode sombre (table en feutrine)</span>
+        <input type="checkbox" id="set-darkmode" checked />
+      </label>
+
+      <div class="field-divider">Variantes de règles</div>
+
+      <label class="field field-toggle">
+        <span>Le 3 de trèfle commence la partie</span>
+        <input type="checkbox" id="set-3club" checked />
+      </label>
+
+      <label class="field field-toggle">
+        <span>Le 2 est la carte la plus forte</span>
+        <input type="checkbox" id="set-twopower" checked />
+      </label>
+
+      <label class="field field-toggle">
+        <span>Les carrés (bombes) effacent le pli</span>
+        <input type="checkbox" id="set-bombs" checked />
+      </label>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="btn-reset-stats-inline">Réinitialiser les statistiques</button>
+      <button class="btn btn-gold" id="btn-apply-settings">Appliquer &amp; nouvelle partie</button>
+    </div>
+  </div>
 </div>
 
-<script>
-(function(){
-"use strict";
-
-/* ============================= DONNÉES MUSICALES ============================= */
-
-const LETTER_SEMITONE = {C:0,D:2,E:4,F:5,G:7,A:9,B:11};
-const LETTERS = ['C','D','E','F','G','A','B'];
-const SOLFEGE = {C:'Do',D:'Ré',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
-const DIATONIC_STEP = {C:0,D:1,E:2,F:3,G:4,A:5,B:6};
-
-// spelling per semitone: natural letter, or {sharp:[letter,'#'], flat:[letter,'b']}
-const SEMITONE_SPELLING = {
-  0:{nat:['C','']},
-  1:{sharp:['C','#'], flat:['D','b']},
-  2:{nat:['D','']},
-  3:{sharp:['D','#'], flat:['E','b']},
-  4:{nat:['E','']},
-  5:{nat:['F','']},
-  6:{sharp:['F','#'], flat:['G','b']},
-  7:{nat:['G','']},
-  8:{sharp:['G','#'], flat:['A','b']},
-  9:{nat:['A','']},
-  10:{sharp:['A','#'], flat:['B','b']},
-  11:{nat:['B','']}
-};
-
-function midiToOctave(midi){ return Math.floor(midi/12)-1; }
-
-function diatonicNumber(letter, octave){ return octave*7 + DIATONIC_STEP[letter]; }
-
-const CLEF_REF = {
-  treble: diatonicNumber('E',4), // bottom line
-  bass: diatonicNumber('G',2)    // bottom line
-};
-
-function noteName(note, useSolfege, showOctave){
-  const base = useSolfege ? SOLFEGE[note.letter] : note.letter;
-  let acc = '';
-  if(note.accidental === '#') acc = useSolfege ? ' dièse' : '#';
-  if(note.accidental === 'b') acc = useSolfege ? ' bémol' : '♭';
-  const oct = showOctave ? note.octave : '';
-  return base + acc + oct;
-}
-
-/* Build a note object for a given midi + preferred accidental style ('sharp'|'flat'|'mixed') */
-function buildNoteFromMidi(midi, style){
-  const semitone = ((midi % 12) + 12) % 12;
-  const spelling = SEMITONE_SPELLING[semitone];
-  let letter, accidental;
-  if(spelling.nat){
-    letter = spelling.nat[0]; accidental = '';
-  } else {
-    let useSharp;
-    if(style === 'sharp') useSharp = true;
-    else if(style === 'flat') useSharp = false;
-    else useSharp = Math.random() < 0.5;
-    const pick = useSharp ? spelling.sharp : spelling.flat;
-    letter = pick[0]; accidental = pick[1];
-  }
-  // octave depends on the letter chosen (spelling can shift perceived octave e.g. Cb/B# edge cases are rare here since we stick to standard 12 spellings above, so straightforward)
-  const octave = midiToOctave(midi);
-  return {midi, letter, accidental, octave};
-}
-
-/* ============================= ÉTAT / RÉGLAGES ============================= */
-
-const DEFAULT_SETTINGS = {
-  theme:'light',
-  preset:'debutant',
-  clefMode:'treble',
-  rangeMin: 60, // C4
-  rangeMax: 72, // C5
-  accidentals:false,
-  accStyle:'sharp',
-  inputMethod:'virtual',
-  midiDeviceId:null,
-  ignoreOctave:false,
-  solfege:false,
-  showOctave:true,
-  hintKeyboard:false,
-  sound:true,
-  autoAdvance:0,
-  mode:'libre',
-  chronoDuration:60
-};
-
-const PRESETS = {
-  debutant:{clefMode:'treble', rangeMin:60, rangeMax:72, accidentals:false, desc:"Clé de sol, Do4 à Do5, notes naturelles uniquement."},
-  intermediaire:{clefMode:'alterne', rangeMin:48, rangeMax:84, accidentals:false, desc:"Clés alternées (Sol/Fa), Do3 à Do6, notes naturelles."},
-  avance:{clefMode:'alterne', rangeMin:36, rangeMax:96, accidentals:true, desc:"Clés alternées, La0 à Do7 environ, dièses et bémols inclus."}
-};
-
-let settings = loadJSON('pdt_settings_v1', DEFAULT_SETTINGS);
-// merge defaults for any missing keys (future-proofing)
-settings = Object.assign({}, DEFAULT_SETTINGS, settings);
-
-let stats = loadJSON('pdt_stats_v1', {
-  totalAttempts:0, totalCorrect:0, bestStreak:0,
-  chronoBest:{60:0,120:0}, perNote:{}, reactionSum:0, reactionCount:0
-});
-
-function loadJSON(key, fallback){
-  try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(fallback)); }
-  catch(e){ return JSON.parse(JSON.stringify(fallback)); }
-}
-function saveSettings(){ try{ localStorage.setItem('pdt_settings_v1', JSON.stringify(settings)); }catch(e){} }
-function saveStats(){ try{ localStorage.setItem('pdt_stats_v1', JSON.stringify(stats)); }catch(e){} }
-
-/* ============================= ÉTAT DE SESSION ============================= */
-
-let session = {
-  active:false, mode:'libre', score:0, streak:0, timeLeft:60,
-  timerHandle:null, autoAdvanceHandle:null,
-  currentNote:null, noteShownAt:0, lastNoteKey:null
-};
-
-/* ============================= UI: RÉFÉRENCES ============================= */
-
-const $ = (id) => document.getElementById(id);
-const staffSvg = $('staffSvg');
-const keyboardSvg = $('keyboardSvg');
-const feedbackOverlay = $('feedbackOverlay');
-const currentAnswerName = $('currentAnswerName');
-
-/* ============================= THEME & SETTINGS PANEL ============================= */
-
-function applyTheme(){
-  document.body.setAttribute('data-theme', settings.theme);
-  $('toggleThemeBtn').textContent = settings.theme === 'dark' ? '☀' : '☾';
-}
-$('toggleThemeBtn').addEventListener('click', ()=>{
-  settings.theme = settings.theme === 'dark' ? 'light' : 'dark';
-  applyTheme(); saveSettings();
-});
-$('toggleSettingsBtn').addEventListener('click', ()=>{
-  $('settingsPanel').classList.toggle('collapsed');
-});
-
-/* ---- Plein écran (overlay CSS, fonctionne sur iOS Safari où l'API Fullscreen native est limitée) ---- */
-function setFullscreenMode(active){
-  document.body.classList.toggle('fullscreen-mode', active);
-  const btn = $('fullscreenBtn');
-  btn.textContent = active ? '×' : '⤢';
-  btn.title = active ? 'Quitter le plein écran' : 'Plein écran';
-  btn.classList.toggle('is-active', active);
-  if(active) window.scrollTo(0,0);
-}
-$('fullscreenBtn').addEventListener('click', ()=>{
-  setFullscreenMode(!document.body.classList.contains('fullscreen-mode'));
-});
-document.addEventListener('keydown', e=>{
-  if(e.key === 'Escape' && document.body.classList.contains('fullscreen-mode')) setFullscreenMode(false);
-});
-
-/* ============================= NOTE PICKER OPTIONS (custom range) ============================= */
-
-function populateNotePickers(){
-  const minSel = $('rangeMin'), maxSel = $('rangeMax');
-  minSel.innerHTML = ''; maxSel.innerHTML = '';
-  for(let m=21; m<=108; m++){
-    const n = buildNoteFromMidi(m, 'sharp');
-    const label = n.letter + n.accidental + n.octave;
-    const o1 = document.createElement('option'); o1.value=m; o1.textContent=label;
-    const o2 = document.createElement('option'); o2.value=m; o2.textContent=label;
-    minSel.appendChild(o1); maxSel.appendChild(o2);
-  }
-  minSel.value = settings.rangeMin;
-  maxSel.value = settings.rangeMax;
-}
-populateNotePickers();
-
-/* ============================= PRESETS ============================= */
-
-function applyPreset(name){
-  settings.preset = name;
-  document.querySelectorAll('.chip[data-preset]').forEach(b=>b.classList.toggle('active', b.dataset.preset===name));
-  const custom = name === 'custom';
-  $('customRangeFieldset').style.display = custom ? 'block' : 'none';
-  if(!custom){
-    const p = PRESETS[name];
-    settings.clefMode = p.clefMode;
-    settings.rangeMin = p.rangeMin;
-    settings.rangeMax = p.rangeMax;
-    settings.accidentals = p.accidentals;
-    $('presetDesc').textContent = p.desc;
-    $('clefMode').value = settings.clefMode;
-    $('rangeMin').value = settings.rangeMin;
-    $('rangeMax').value = settings.rangeMax;
-    $('accidentalsToggle').checked = settings.accidentals;
-    $('accStyleField').style.display = settings.accidentals ? 'block' : 'none';
-  } else {
-    $('presetDesc').textContent = "Réglez librement la clé, la tessiture et les altérations ci-dessous.";
-  }
-  saveSettings();
-  refreshKeyboardRange();
-}
-
-document.querySelectorAll('.chip[data-preset]').forEach(btn=>{
-  btn.addEventListener('click', ()=> applyPreset(btn.dataset.preset));
-});
-
-$('clefMode').addEventListener('change', e=>{ settings.clefMode = e.target.value; saveSettings(); refreshKeyboardRange(); });
-$('rangeMin').addEventListener('change', e=>{ settings.rangeMin = parseInt(e.target.value,10); saveSettings(); refreshKeyboardRange(); });
-$('rangeMax').addEventListener('change', e=>{ settings.rangeMax = parseInt(e.target.value,10); saveSettings(); refreshKeyboardRange(); });
-$('accidentalsToggle').addEventListener('change', e=>{
-  settings.accidentals = e.target.checked;
-  $('accStyleField').style.display = settings.accidentals ? 'block' : 'none';
-  saveSettings();
-});
-$('accStyle').addEventListener('change', e=>{ settings.accStyle = e.target.value; saveSettings(); });
-
-/* ============================= AFFICHAGE OPTIONS ============================= */
-
-$('solfegeToggle').addEventListener('change', e=>{ settings.solfege=e.target.checked; saveSettings(); renderAnswerNameIfRevealed(); });
-$('showOctaveToggle').addEventListener('change', e=>{ settings.showOctave=e.target.checked; saveSettings(); renderAnswerNameIfRevealed(); });
-$('hintKeyboardToggle').addEventListener('change', e=>{ settings.hintKeyboard=e.target.checked; saveSettings(); highlightTargetKey(); });
-$('soundToggle').addEventListener('change', e=>{ settings.sound=e.target.checked; saveSettings(); });
-$('autoAdvance').addEventListener('change', e=>{ settings.autoAdvance=parseInt(e.target.value,10); saveSettings(); });
-$('ignoreOctaveToggle').addEventListener('change', e=>{ settings.ignoreOctave=e.target.checked; saveSettings(); });
-
-/* ============================= MODES DE JEU ============================= */
-
-document.querySelectorAll('.mode-tab').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    if(session.active) return; // ne pas changer en pleine session
-    document.querySelectorAll('.mode-tab').forEach(b=>b.classList.toggle('active', b===btn));
-    settings.mode = btn.dataset.mode;
-    $('chronoDurationField').style.display = settings.mode==='chrono' ? 'block' : 'none';
-    $('sessTimerWrap').style.display = settings.mode==='chrono' ? 'inline' : 'none';
-    saveSettings();
-  });
-});
-$('chronoDuration').addEventListener('change', e=>{ settings.chronoDuration=parseInt(e.target.value,10); saveSettings(); });
-
-$('startStopBtn').addEventListener('click', ()=>{
-  if(session.active) stopSession(); else startSession();
-});
-$('skipBtn').addEventListener('click', ()=>{ if(session.active) nextNote(); });
-$('revealBtn').addEventListener('click', revealAnswer);
-$('resetStatsBtn').addEventListener('click', ()=>{
-  if(confirm('Réinitialiser toutes les statistiques ?')){
-    stats = {totalAttempts:0,totalCorrect:0,bestStreak:0,chronoBest:{60:0,120:0},perNote:{},reactionSum:0,reactionCount:0};
-    saveStats(); renderStats();
-  }
-});
-
-/* ============================= GÉNÉRATION DES NOTES ============================= */
-
-function candidateNotesForClef(clef){
-  // choose a musically sensible sub-range for a given clef inside the global range
-  let lo = settings.rangeMin, hi = settings.rangeMax;
-  if(settings.clefMode === 'alterne'){
-    if(clef === 'treble') lo = Math.max(lo, 55); // roughly G3 and up looks natural in treble
-    if(clef === 'bass') hi = Math.min(hi, 65);   // roughly F4 and below looks natural in bass
-    if(lo > hi){ lo = settings.rangeMin; hi = settings.rangeMax; } // fallback if range too narrow
-  }
-  const list = [];
-  for(let m=lo; m<=hi; m++){
-    const semitone = ((m%12)+12)%12;
-    const isNatural = !!SEMITONE_SPELLING[semitone].nat;
-    if(!isNatural && !settings.accidentals) continue;
-    list.push(m);
-  }
-  return list;
-}
-
-function pickClefForNote(){
-  if(settings.clefMode === 'treble') return 'treble';
-  if(settings.clefMode === 'bass') return 'bass';
-  return Math.random() < 0.5 ? 'treble' : 'bass';
-}
-
-function generateNote(){
-  let clef = pickClefForNote();
-  let pool = candidateNotesForClef(clef);
-  if(pool.length === 0){ clef = clef==='treble'?'bass':'treble'; pool = candidateNotesForClef(clef); }
-  if(pool.length === 0){ pool = [60]; } // ultimate fallback
-  let midi, tries=0;
-  do{
-    midi = pool[Math.floor(Math.random()*pool.length)];
-    tries++;
-  } while(pool.length>1 && session.lastNoteKey === (clef+'-'+midi) && tries<12);
-  const note = buildNoteFromMidi(midi, settings.accStyle);
-  note.clef = clef;
-  return note;
-}
-
-/* ============================= DESSIN DE LA PORTÉE ============================= */
-
-const STAFF = { lineGap:14, topY:96, bottomY:96+4*14, staffLeft:60, staffRight:560, noteX:340 };
-
-function svgEl(tag, attrs){
-  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
-  for(const k in attrs) el.setAttribute(k, attrs[k]);
-  return el;
-}
-
-function drawStaff(note){
-  staffSvg.innerHTML = '';
-  const {lineGap, topY, bottomY, staffLeft, staffRight, noteX} = STAFF;
-
-  // 5 lines
-  for(let i=0;i<5;i++){
-    const y = topY + i*lineGap;
-    staffSvg.appendChild(svgEl('line', {x1:staffLeft, x2:staffRight, y1:y, y2:y, class:'staff-lines'}));
-  }
-
-  // clef glyph
-  if(note.clef === 'treble'){
-    const t = svgEl('text', {x:staffLeft+8, y:bottomY+8, 'font-size':100, class:'clef'});
-    t.textContent = '𝄞'; staffSvg.appendChild(t);
-  } else {
-    const t = svgEl('text', {x:staffLeft+8, y:topY+34, 'font-size':78, class:'clef'});
-    t.textContent = '𝄢'; staffSvg.appendChild(t);
-  }
-
-  // position
-  const ref = CLEF_REF[note.clef];
-  const position = diatonicNumber(note.letter, note.octave) - ref;
-  const noteY = bottomY - position*(lineGap/2);
-
-  // ledger lines below
-  if(position < 0){
-    let p = -2;
-    while(p >= position){
-      const y = bottomY - p*(lineGap/2);
-      staffSvg.appendChild(svgEl('line', {x1:noteX-16, x2:noteX+16, y1:y, y2:y, class:'ledger'}));
-      p -= 2;
-    }
-  }
-  // ledger lines above
-  if(position > 8){
-    let p = 10;
-    while(p <= position){
-      const y = bottomY - p*(lineGap/2);
-      staffSvg.appendChild(svgEl('line', {x1:noteX-16, x2:noteX+16, y1:y, y2:y, class:'ledger'}));
-      p += 2;
-    }
-  }
-
-  // accidental
-  if(note.accidental){
-    const sym = note.accidental === '#' ? '♯' : '♭';
-    const t = svgEl('text', {x:noteX-26, y:noteY+7, 'font-size':22, class:'accidental'});
-    t.textContent = sym; staffSvg.appendChild(t);
-  }
-
-  // stem
-  const stemUp = position <= 4;
-  const stemX = stemUp ? noteX+7 : noteX-7;
-  const stemY1 = noteY;
-  const stemY2 = stemUp ? noteY-34 : noteY+34;
-  staffSvg.appendChild(svgEl('line', {x1:stemX, x2:stemX, y1:stemY1, y2:stemY2, class:'stem'}));
-
-  // notehead (rotated ellipse)
-  const head = svgEl('ellipse', {cx:noteX, cy:noteY, rx:8, ry:6, class:'notehead', transform:`rotate(-18 ${noteX} ${noteY})`});
-  staffSvg.appendChild(head);
-}
-
-/* ============================= CLAVIER VIRTUEL ============================= */
-
-let keyboardRange = {lo:48, hi:84}; // default C3..C6 display
-
-function refreshKeyboardRange(){
-  let lo = Math.max(21, settings.rangeMin - 3);
-  let hi = Math.min(108, settings.rangeMax + 3);
-  if(hi - lo < 24){ // keep a reasonable minimum visible width
-    hi = Math.min(108, lo+24);
-  }
-  keyboardRange = {lo, hi};
-  buildKeyboard();
-}
-
-function isBlackKey(midi){
-  const s = ((midi%12)+12)%12;
-  return [1,3,6,8,10].includes(s);
-}
-
-function buildKeyboard(){
-  const {lo, hi} = keyboardRange;
-  const whiteKeys = [];
-  for(let m=lo;m<=hi;m++) if(!isBlackKey(m)) whiteKeys.push(m);
-  const wKeyW = 26, wKeyH = 120, bKeyW = 16, bKeyH = 76;
-  const width = whiteKeys.length * wKeyW + 4;
-  keyboardSvg.setAttribute('viewBox', `0 0 ${width} 130`);
-  keyboardSvg.setAttribute('width', width);
-  keyboardSvg.innerHTML = '';
-
-  const xOfWhiteIndex = {};
-  whiteKeys.forEach((m,i)=>{ xOfWhiteIndex[m] = i*wKeyW+2; });
-
-  // white keys
-  whiteKeys.forEach((m,i)=>{
-    const x = i*wKeyW+2;
-    const r = svgEl('rect',{x, y:4, width:wKeyW-2, height:wKeyH, rx:3, class:'pkey-white', 'data-midi':m});
-    r.addEventListener('click', ()=> onNotePlayed(m));
-    keyboardSvg.appendChild(r);
-  });
-  // black keys
-  for(let m=lo;m<=hi;m++){
-    if(!isBlackKey(m)) continue;
-    // find preceding white key to position relative to it
-    let prevWhite = m-1;
-    while(isBlackKey(prevWhite) && prevWhite>lo-2) prevWhite--;
-    const baseX = xOfWhiteIndex[prevWhite];
-    if(baseX === undefined) continue;
-    const x = baseX + (wKeyW-2) - bKeyW/2;
-    const r = svgEl('rect',{x, y:4, width:bKeyW, height:bKeyH, rx:2, class:'pkey-black', 'data-midi':m});
-    r.addEventListener('click', ()=> onNotePlayed(m));
-    keyboardSvg.appendChild(r);
-  }
-  const loName = buildNoteFromMidi(lo,'sharp'), hiName = buildNoteFromMidi(hi,'sharp');
-  $('keyboardRangeLabel').textContent = `${loName.letter}${loName.octave} → ${hiName.letter}${hiName.octave}`;
-  highlightTargetKey();
-}
-
-function highlightTargetKey(){
-  keyboardSvg.querySelectorAll('[data-midi]').forEach(el=>el.classList.remove('pkey-target'));
-  if(settings.hintKeyboard && session.currentNote){
-    const el = keyboardSvg.querySelector(`[data-midi="${session.currentNote.midi}"]`);
-    if(el) el.classList.add('pkey-target');
-  }
-}
-
-/* ============================= SON DE RETOUR ============================= */
-
-let feedbackCtx = null;
-function ensureFeedbackCtx(){ if(!feedbackCtx) feedbackCtx = new (window.AudioContext||window.webkitAudioContext)(); return feedbackCtx; }
-
-function playTone(freqs, dur, type){
-  if(!settings.sound) return;
-  const ctx = ensureFeedbackCtx();
-  const now = ctx.currentTime;
-  freqs.forEach((f,i)=>{
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = type; osc.frequency.value = f;
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.18, now+0.01+i*0.06);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now+dur+i*0.06);
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.start(now+i*0.06); osc.stop(now+dur+i*0.06+0.05);
-  });
-}
-function playCorrectSound(){ playTone([523.25, 659.25], 0.28, 'sine'); }
-function playWrongSound(){ playTone([146.83], 0.32, 'sawtooth'); }
-
-/* ============================= MIDI ============================= */
-
-let midiAccessObj = null, midiInputs = [];
-
-function initMIDI(){
-  if(!navigator.requestMIDIAccess){
-    $('midiStatus').textContent = "Web MIDI non supporté par ce navigateur (essayez Chrome/Edge).";
-    $('midiStatus').className = 'device-status err';
-    return;
-  }
-  navigator.requestMIDIAccess().then(access=>{
-    midiAccessObj = access;
-    refreshMidiInputs();
-    access.onstatechange = refreshMidiInputs;
-  }).catch(()=>{
-    $('midiStatus').textContent = "Accès MIDI refusé.";
-    $('midiStatus').className = 'device-status err';
-  });
-}
-
-function refreshMidiInputs(){
-  midiInputs = Array.from(midiAccessObj.inputs.values());
-  const sel = $('midiDeviceSelect');
-  sel.innerHTML = '';
-  if(midiInputs.length === 0){
-    sel.innerHTML = '<option>Aucun périphérique détecté</option>';
-    $('midiStatus').textContent = "Branchez votre clavier MIDI et rafraîchissez.";
-    $('midiStatus').className = 'device-status err';
-    return;
-  }
-  midiInputs.forEach(inp=>{
-    const o = document.createElement('option'); o.value = inp.id; o.textContent = inp.name;
-    sel.appendChild(o);
-  });
-  attachMidiListeners();
-  $('midiStatus').textContent = `${midiInputs.length} périphérique(s) détecté(s).`;
-  $('midiStatus').className = 'device-status ok';
-}
-
-function attachMidiListeners(){
-  midiInputs.forEach(inp=>{ inp.onmidimessage = handleMIDIMessage; });
-}
-
-function handleMIDIMessage(msg){
-  const [status, data1, data2] = msg.data;
-  const cmd = status & 0xf0;
-  if(cmd === 0x90 && data2 > 0){ // note on with velocity
-    onNotePlayed(data1);
-  }
-}
-
-$('midiDeviceSelect').addEventListener('change', e=>{ settings.midiDeviceId = e.target.value; saveSettings(); });
-
-/* ============================= MICROPHONE + DÉTECTION DE HAUTEUR ============================= */
-
-let micCtx=null, micAnalyser=null, micStream=null, micRAF=null, micBuffer=null;
-let pitchHistory = [];
-
-function enableMic(){
-  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}}).then(stream=>{
-    micStream = stream;
-    micCtx = new (window.AudioContext||window.webkitAudioContext)();
-    const source = micCtx.createMediaStreamSource(stream);
-    micAnalyser = micCtx.createAnalyser();
-    micAnalyser.fftSize = 2048;
-    micBuffer = new Float32Array(micAnalyser.fftSize);
-    source.connect(micAnalyser);
-    $('micStatus').textContent = "Micro actif — jouez une note.";
-    $('micStatus').className = 'device-status ok';
-    $('tunerLine').style.display = 'flex';
-    micLoop();
-  }).catch(()=>{
-    $('micStatus').textContent = "Permission micro refusée.";
-    $('micStatus').className = 'device-status err';
-  });
-}
-$('enableMicBtn').addEventListener('click', enableMic);
-
-function micLoop(){
-  micRAF = requestAnimationFrame(micLoop);
-  micAnalyser.getFloatTimeDomainData(micBuffer);
-  const freq = autoCorrelate(micBuffer, micCtx.sampleRate);
-  if(freq > 0){
-    const midiFloat = 69 + 12*Math.log2(freq/440);
-    const midiRounded = Math.round(midiFloat);
-    $('tunerFreq').textContent = freq.toFixed(1) + ' Hz';
-    const cents = (midiFloat - midiRounded) * 100;
-    $('tunerNeedle').style.left = `calc(50% + ${Math.max(-40,Math.min(40,cents/2.5*10))}px)`;
-
-    pitchHistory.push(midiRounded);
-    if(pitchHistory.length > 6) pitchHistory.shift();
-    if(pitchHistory.length >= 4){
-      const allSame = pitchHistory.slice(-4).every(v=>v===midiRounded);
-      if(allSame) confirmMicNote(midiRounded);
-    }
-  } else {
-    $('tunerFreq').textContent = '—';
-    pitchHistory = [];
-  }
-}
-
-let lastMicNoteTime = 0;
-function confirmMicNote(midi){
-  const now = performance.now();
-  if(now - lastMicNoteTime < 700) return; // debounce sustained notes
-  lastMicNoteTime = now;
-  onNotePlayed(midi);
-}
-
-// ACF2+ autocorrelation pitch detection (classic public-domain approach)
-function autoCorrelate(buf, sampleRate){
-  const SIZE = buf.length;
-  let rms = 0;
-  for(let i=0;i<SIZE;i++) rms += buf[i]*buf[i];
-  rms = Math.sqrt(rms/SIZE);
-  if(rms < 0.01) return -1; // too quiet
-
-  let r1=0, r2=SIZE-1, thres=0.2;
-  for(let i=0;i<SIZE/2;i++){ if(Math.abs(buf[i])<thres){ r1=i; break; } }
-  for(let i=1;i<SIZE/2;i++){ if(Math.abs(buf[SIZE-i])<thres){ r2=SIZE-i; break; } }
-  const trimmed = buf.slice(r1, r2);
-  const newSize = trimmed.length;
-
-  const c = new Array(newSize).fill(0);
-  for(let lag=0; lag<newSize; lag++){
-    for(let i=0; i<newSize-lag; i++) c[lag] += trimmed[i]*trimmed[i+lag];
-  }
-  let d = 0; while(c[d] > c[d+1]) d++;
-  let maxval = -1, maxpos = -1;
-  for(let i=d;i<newSize;i++){
-    if(c[i] > maxval){ maxval = c[i]; maxpos = i; }
-  }
-  let T0 = maxpos;
-  if(T0 <= 0) return -1;
-  const x1=c[T0-1]||c[T0], x2=c[T0], x3=c[T0+1]||c[T0];
-  const a = (x1+x3-2*x2)/2, b=(x3-x1)/2;
-  if(a) T0 = T0 - b/(2*a);
-  return sampleRate / T0;
-}
-
-function stopMic(){
-  if(micRAF) cancelAnimationFrame(micRAF);
-  if(micStream) micStream.getTracks().forEach(t=>t.stop());
-  micCtx = null; micStream=null;
-}
-
-/* ============================= GESTION DE LA MÉTHODE D'ENTRÉE ============================= */
-
-$('inputMethod').addEventListener('change', e=>{
-  settings.inputMethod = e.target.value; saveSettings();
-  updateInputMethodUI();
-});
-function updateInputMethodUI(){
-  $('midiDeviceField').style.display = settings.inputMethod==='midi' ? 'block' : 'none';
-  $('micDeviceField').style.display = settings.inputMethod==='mic' ? 'block' : 'none';
-  if(settings.inputMethod === 'midi' && !midiAccessObj) initMIDI();
-}
-
-/* ============================= LOGIQUE DE JEU ============================= */
-
-function startSession(){
-  session.active = true;
-  session.mode = settings.mode;
-  session.score = 0; session.streak = 0;
-  session.lastNoteKey = null;
-  $('startStopBtn').textContent = 'Arrêter';
-  $('startStopBtn').classList.add('stop');
-  document.querySelectorAll('.mode-tab').forEach(b=>b.style.pointerEvents='none');
-  updateSessionStatsUI();
-
-  if(session.mode === 'chrono'){
-    session.timeLeft = settings.chronoDuration;
-    $('sessTimerWrap').style.display='inline';
-    $('sessTimer').textContent = session.timeLeft;
-    session.timerHandle = setInterval(()=>{
-      session.timeLeft--;
-      $('sessTimer').textContent = session.timeLeft;
-      if(session.timeLeft <= 0) endSession();
-    }, 1000);
-  }
-  nextNote();
-}
-
-function stopSession(){ endSession(); }
-
-function endSession(){
-  session.active = false;
-  if(session.timerHandle) clearInterval(session.timerHandle);
-  if(session.autoAdvanceHandle) clearTimeout(session.autoAdvanceHandle);
-  $('startStopBtn').textContent = 'Commencer';
-  $('startStopBtn').classList.remove('stop');
-  document.querySelectorAll('.mode-tab').forEach(b=>b.style.pointerEvents='auto');
-
-  if(session.mode === 'chrono'){
-    const dur = settings.chronoDuration;
-    if(session.score > (stats.chronoBest[dur]||0)){
-      stats.chronoBest[dur] = session.score;
-      saveStats();
-    }
-  }
-  if(session.mode === 'serie'){
-    if(session.streak > stats.bestStreak){ stats.bestStreak = session.streak; saveStats(); }
-  }
-  renderStats();
-  currentAnswerName.textContent = '';
-  feedbackOverlay.className = 'feedback-overlay';
-}
-
-function nextNote(){
-  if(session.autoAdvanceHandle) clearTimeout(session.autoAdvanceHandle);
-  const note = generateNote();
-  session.currentNote = note;
-  session.lastNoteKey = note.clef+'-'+note.midi;
-  session.noteShownAt = performance.now();
-  currentAnswerName.textContent = '';
-  feedbackOverlay.className = 'feedback-overlay';
-  drawStaff(note);
-  highlightTargetKey();
-
-  if(settings.autoAdvance > 0){
-    session.autoAdvanceHandle = setTimeout(()=>{
-      if(session.active) handleAnswer(false, true);
-    }, settings.autoAdvance*1000);
-  }
-}
-
-function revealAnswer(){ renderAnswerNameIfRevealed(true); }
-function renderAnswerNameIfRevealed(force){
-  if(!session.currentNote) return;
-  if(force) currentAnswerName.textContent = noteName(session.currentNote, settings.solfege, settings.showOctave);
-}
-
-function onNotePlayed(midi){
-  if(!session.active) return;
-  const target = session.currentNote;
-  let correct;
-  if(settings.ignoreOctave){
-    correct = (((midi - target.midi)%12)+12)%12 === 0;
-  } else {
-    correct = midi === target.midi;
-  }
-  handleAnswer(correct);
-}
-
-function noteStatKey(note){ return note.letter+note.accidental+note.octave; }
-
-function handleAnswer(correct, wasTimeout){
-  if(session.autoAdvanceHandle) clearTimeout(session.autoAdvanceHandle);
-  const note = session.currentNote;
-  const reactionMs = performance.now() - session.noteShownAt;
-
-  stats.totalAttempts++;
-  if(correct) stats.totalCorrect++;
-  if(!wasTimeout){ stats.reactionSum += reactionMs; stats.reactionCount++; }
-
-  const key = noteStatKey(note);
-  if(!stats.perNote[key]) stats.perNote[key] = {attempts:0, correct:0};
-  stats.perNote[key].attempts++;
-  if(correct) stats.perNote[key].correct++;
-
-  if(correct){
-    session.score++; session.streak++;
-    if(session.streak > stats.bestStreak) stats.bestStreak = session.streak;
-    feedbackOverlay.textContent = '✓';
-    feedbackOverlay.className = 'feedback-overlay show-correct';
-    playCorrectSound();
-  } else {
-    session.streak = 0;
-    feedbackOverlay.textContent = '✕';
-    feedbackOverlay.className = 'feedback-overlay show-wrong';
-    playWrongSound();
-    currentAnswerName.textContent = noteName(note, settings.solfege, settings.showOctave);
-  }
-  saveStats();
-  updateSessionStatsUI();
-  renderStats();
-
-  if(session.mode === 'serie' && !correct){
-    setTimeout(endSession, 700);
-    return;
-  }
-  setTimeout(()=>{ if(session.active) nextNote(); }, correct ? 550 : 1100);
-}
-
-function updateSessionStatsUI(){
-  $('sessSore').textContent = session.score;
-  $('sessStreak').textContent = session.streak;
-}
-
-/* ============================= STATISTIQUES ============================= */
-
-function renderStats(){
-  $('statTotal').textContent = stats.totalAttempts;
-  $('statAccuracy').textContent = stats.totalAttempts ? Math.round(100*stats.totalCorrect/stats.totalAttempts)+'%' : '—';
-  $('statBestStreak').textContent = stats.bestStreak;
-  $('statReaction').textContent = stats.reactionCount ? Math.round(stats.reactionSum/stats.reactionCount)+' ms' : '—';
-  const dur = settings.chronoDuration;
-  $('statBestChrono').textContent = stats.chronoBest[dur] ? stats.chronoBest[dur] + ' (⏱'+dur+'s)' : '—';
-
-  const rows = Object.entries(stats.perNote)
-    .map(([k,v])=>({key:k, attempts:v.attempts, correct:v.correct, acc: v.correct/v.attempts}))
-    .filter(r=>r.attempts>=3)
-    .sort((a,b)=>a.acc-b.acc)
-    .slice(0,6);
-  const tbody = document.querySelector('#weakTable tbody');
-  tbody.innerHTML = '';
-  if(rows.length===0){
-    tbody.innerHTML = '<tr><td colspan="3" style="color:var(--ink-soft);">Pas encore assez de données (jouez quelques notes).</td></tr>';
-  } else {
-    rows.forEach(r=>{
-      const tr = document.createElement('tr');
-      const pct = Math.round(r.acc*100);
-      tr.innerHTML = `<td>${r.key}</td><td>${pct}% (${r.correct}/${r.attempts})</td><td style="width:120px;"><div class="bar"><div style="width:${100-pct}%"></div></div></td>`;
-      tbody.appendChild(tr);
-    });
-  }
-}
-
-/* ============================= INITIALISATION ============================= */
-
-function initFromSettings(){
-  applyTheme();
-  $('clefMode').value = settings.clefMode;
-  $('rangeMin').value = settings.rangeMin;
-  $('rangeMax').value = settings.rangeMax;
-  $('accidentalsToggle').checked = settings.accidentals;
-  $('accStyle').value = settings.accStyle;
-  $('accStyleField').style.display = settings.accidentals ? 'block' : 'none';
-  $('inputMethod').value = settings.inputMethod;
-  $('ignoreOctaveToggle').checked = settings.ignoreOctave;
-  $('solfegeToggle').checked = settings.solfege;
-  $('showOctaveToggle').checked = settings.showOctave;
-  $('hintKeyboardToggle').checked = settings.hintKeyboard;
-  $('soundToggle').checked = settings.sound;
-  $('autoAdvance').value = settings.autoAdvance;
-  $('chronoDuration').value = settings.chronoDuration;
-
-  document.querySelectorAll('.mode-tab').forEach(b=>b.classList.toggle('active', b.dataset.mode===settings.mode));
-  $('chronoDurationField').style.display = settings.mode==='chrono' ? 'block' : 'none';
-  $('sessTimerWrap').style.display = settings.mode==='chrono' ? 'inline' : 'none';
-
-  const isPreset = PRESETS[settings.preset];
-  document.querySelectorAll('.chip[data-preset]').forEach(b=>b.classList.toggle('active', b.dataset.preset===settings.preset));
-  $('customRangeFieldset').style.display = settings.preset==='custom' ? 'block' : 'none';
-  if(isPreset) $('presetDesc').textContent = isPreset.desc;
-
-  updateInputMethodUI();
-  refreshKeyboardRange();
-
-  // draw an idle placeholder note (middle C) before the first session starts
-  drawStaff(buildNoteFromMidi(60,'sharp'));
-  renderStats();
-}
-
-initFromSettings();
-
-})();
-</script>
+<!-- Statistiques -->
+<div class="modal-overlay" id="modal-stats" hidden>
+  <div class="modal parchment" role="dialog" aria-labelledby="stats-title">
+    <button class="modal-close" data-close-modal>✕</button>
+    <h2 id="stats-title">Statistiques</h2>
+    <div class="stats-grid" id="stats-grid"><!-- généré en JS --></div>
+    <h3 class="stats-subtitle">Dernières parties</h3>
+    <ul class="stats-history" id="stats-history-list"></ul>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="btn-reset-stats">Réinitialiser les statistiques</button>
+    </div>
+  </div>
+</div>
+
+<!-- Entraînement / Scénarios -->
+<div class="modal-overlay" id="modal-training" hidden>
+  <div class="modal parchment" role="dialog" aria-labelledby="training-title">
+    <button class="modal-close" data-close-modal>✕</button>
+    <h2 id="training-title">Entraînement — Situation ciblée</h2>
+    <p class="training-context" id="training-context"></p>
+    <div class="training-pile" id="training-pile"></div>
+    <div class="training-hand" id="training-hand"></div>
+    <div class="training-feedback" id="training-feedback" hidden></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="btn-training-clear">Annuler la sélection</button>
+      <button class="btn btn-gold" id="btn-training-submit">Valider ma réponse</button>
+      <button class="btn btn-primary" id="btn-training-next" hidden>Situation suivante →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Analyse du dernier coup -->
+<div class="modal-overlay" id="modal-analysis" hidden>
+  <div class="modal parchment small" role="dialog" aria-labelledby="analysis-title">
+    <button class="modal-close" data-close-modal>✕</button>
+    <h2 id="analysis-title">Analyse du dernier coup</h2>
+    <div id="analysis-content" class="analysis-content"></div>
+  </div>
+</div>
+
+<!-- Fin de partie -->
+<div class="modal-overlay" id="modal-endgame" hidden>
+  <div class="modal parchment" role="dialog" aria-labelledby="endgame-title">
+    <button class="modal-close" data-close-modal>✕</button>
+    <h2 id="endgame-title">Fin de partie</h2>
+    <div id="endgame-content" class="endgame-content"></div>
+    <div class="modal-actions">
+      <button class="btn btn-gold" id="btn-endgame-newgame">Rejouer</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/game.js"></script>
+<script src="js/bot.js"></script>
+<script src="js/coach.js"></script>
+<script src="js/analysis.js"></script>
+<script src="js/statistics.js"></script>
+<script src="js/scenarios.js"></script>
+<script src="js/ui.js"></script>
 </body>
 </html>
